@@ -1,0 +1,119 @@
+<!--
+title: Wiki JS
+description: 
+published: true
+date: 2025-09-17T02:57:56.434Z
+tags: docker, container, chatgpt
+editor: code
+dateCreated: 2025-09-17T02:09:14.163Z
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Postgres + Wiki.js Setup & Troubleshooting</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 2em; }
+    code, pre { background: #f4f4f4; padding: 4px 6px; border-radius: 4px; }
+    pre { overflow-x: auto; padding: 10px; }
+    h1, h2, h3 { color: #2c3e50; }
+    blockquote { border-left: 4px solid #ccc; padding-left: 10px; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>Postgres + Wiki.js Setup & Troubleshooting (Docker/Portainer)</h1>
+  <blockquote><strong>Scope:</strong> Bring up Wiki.js against an existing Postgres in Docker, fix <code>pg_hba.conf</code> and auth errors, and verify connectivity.</blockquote>
+
+  <h2>At-a-glance</h2>
+  <ul>
+    <li><strong>DB container name:</strong> <code>postgres</code> (on <code>db_net</code>)</li>
+    <li><strong>Wiki.js container name:</strong> <code>wikijs</code> (on <code>frontend_net</code>, <code>db_net</code>)</li>
+    <li><strong>Docker subnet:</strong> <code>192.168.48.0/20</code></li>
+    <li><strong>Wiki.js DB user/db:</strong> <code>wikijs</code> / <code>wikijs</code></li>
+    <li><strong>SSL:</strong> disabled (internal Docker network)</li>
+  </ul>
+
+  <h2>Symptoms</h2>
+  <pre><code>no pg_hba.conf entry for host "192.168.48.12", user "wikijs", database "wikijs", no encryption
+Database Connection Error: 28000</code></pre>
+
+  <p><strong>Meaning:</strong></p>
+  <ul>
+    <li>Postgres rejected the client from the Docker network (<code>pg_hba.conf</code> didn’t allow it).</li>
+    <li>Authentication failed (role/password mismatch or role didn’t exist).</li>
+  </ul>
+
+  <h2>Root cause</h2>
+  <ol>
+    <li>Wiki.js pointed to the wrong DB host (<code>postgres_port</code> instead of <code>postgres</code>).</li>
+    <li><code>pg_hba.conf</code> had no rule for the Docker subnet.</li>
+    <li>The <code>wikijs</code> role/password needed to be created/updated.</li>
+  </ol>
+
+  <h2>Fix — step by step</h2>
+
+  <h3>1) Confirm Docker network & target host</h3>
+  <pre><code>docker network inspect db_net --format '{{(index .IPAM.Config 0).Subnet}}'
+# Expect: 192.168.48.0/20
+
+docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Networks}}' | grep -E '^postgres\b'</code></pre>
+
+  <h3>2) Create the Wiki.js DB & role</h3>
+  <pre><code>WIKIJS_PASS='ChangemeWiki123'
+
+docker exec -it postgres psql -U root -d postgres -c "CREATE DATABASE wikijs;" || true
+docker exec -it postgres psql -U root -d postgres -c "DO $$ BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='wikijs') THEN
+    CREATE ROLE wikijs WITH LOGIN PASSWORD '${WIKIJS_PASS}';
+  ELSE
+    ALTER ROLE wikijs WITH LOGIN PASSWORD '${WIKIJS_PASS}';
+  END IF;
+END $$;"
+docker exec -it postgres psql -U root -d postgres -c "ALTER DATABASE wikijs OWNER TO wikijs;"
+docker exec -it postgres psql -U root -d wikijs -c "GRANT USAGE, CREATE ON SCHEMA public TO wikijs;"</code></pre>
+
+  <h3>3) Allow the Docker subnet in <code>pg_hba.conf</code> and reload</h3>
+  <pre><code>SUBNET=$(docker network inspect db_net --format '{{(index .IPAM.Config 0).Subnet}}')
+
+docker exec -it postgres sh -lc "
+  echo 'host  wikijs  wikijs  ${SUBNET}  scram-sha-256' >> /var/lib/postgresql/data/pg_hba.conf
+  pg_ctl -D /var/lib/postgresql/data reload >/dev/null 2>&1 || true
+  psql -U root -d postgres -c 'SELECT pg_reload_conf();'
+"</code></pre>
+
+  <h3>4) Update Wiki.js service env and redeploy</h3>
+  <pre><code>wikijs:
+  environment:
+    DB_TYPE: postgres
+    DB_HOST: postgres
+    DB_PORT: "5432"
+    DB_USER: wikijs
+    DB_PASS: ${WIKIJS_DB_PASSWORD}
+    DB_NAME: wikijs
+    PGSSLMODE: disable</code></pre>
+
+  <h3>5) Verify connectivity</h3>
+  <pre><code>docker exec -it wikijs sh -lc '
+  PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c "select current_user, current_database();"
+'</code></pre>
+
+  <h3>6) Watch logs</h3>
+  <pre><code>docker logs -f wikijs</code></pre>
+
+  <h2>Final configuration summary</h2>
+  <ul>
+    <li>Postgres container: <code>postgres</code></li>
+    <li>pg_hba.conf contains: <code>host wikijs wikijs 192.168.48.0/20 scram-sha-256</code></li>
+    <li>Wiki.js env: <code>DB_HOST=postgres</code>, <code>DB_USER=wikijs</code>, <code>DB_PASS=ChangemeWiki123</code>, <code>DB_NAME=wikijs</code></li>
+  </ul>
+
+  <h2>Lessons Learned</h2>
+  <ul>
+    <li>Use the actual container name on the Docker network.</li>
+    <li>Add pg_hba.conf rules for your Docker subnet.</li>
+    <li>Set URL-safe passwords and keep them consistent.</li>
+    <li>Always redeploy (not just restart) when envs change.</li>
+  </ul>
+</body>
+</html>
