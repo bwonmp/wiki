@@ -2,7 +2,7 @@
 title: Networks
 description: 
 published: true
-date: 2025-09-24T18:33:23.146Z
+date: 2025-09-24T18:37:02.748Z
 tags: 
 editor: markdown
 dateCreated: 2025-09-24T18:22:42.282Z
@@ -14,7 +14,7 @@ dateCreated: 2025-09-24T18:22:42.282Z
 
 skinparam rectangle {
     BorderColor #304d6d
-    BackgroundColor #f0f0f0
+    BackgroundColor #FFFFE0
 }
 skinparam package {
     BorderColor #666666
@@ -22,6 +22,13 @@ skinparam package {
 skinparam cloud {
     BorderColor #304d6d
 }
+skinparam arrow {
+    FontColor black
+}
+skinparam note {
+    FontColor black
+}
+
 
 ' Define actors and boundaries
 actor "User / Internet" as User
@@ -69,8 +76,8 @@ rectangle "Docker Host" as Host {
     ' Internal services that should not be directly exposed
     package "backend_net (Application)" <<Network>> #DodgerBlue {
         rectangle "sabnzbd" as sabnzbd
-        rectangle "radarr_hd / radarr_4k" as radarr
-        rectangle "sonarr_hd / sonarr_4k" as sonarr
+        rectangle "radarr_hd / radarr_k" as radarr
+        rectangle "sonarr_hd / sonarr_k" as sonarr
         rectangle "prowlarr" as prowlarr
         rectangle "bazarr" as bazarr
         rectangle "immich_machine_learning" as immich_ml
