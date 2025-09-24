@@ -2,138 +2,139 @@
 title: Networks
 description: 
 published: true
-date: 2025-09-24T18:27:06.153Z
+date: 2025-09-24T18:27:19.586Z
 tags: 
 editor: code
 dateCreated: 2025-09-24T18:22:42.282Z
 -->
 
-<p>@startuml</p>
-<p>!theme spacelab</p>
-<p>&nbsp;</p>
-<p>' Define actors and boundaries</p>
-<p>actor "User / Internet" as User</p>
-<p>cloud "LAN (192.168.10.0/24)" as LAN</p>
-<p>&nbsp;</p>
-<p>boundary "Docker Host" {</p>
-<p>&nbsp;</p>
-<p>&nbsp; &nbsp;' --- HOST NETWORK ---</p>
-<p>&nbsp; &nbsp;' Containers with direct access to the host's network interface</p>
-<p>&nbsp; &nbsp;package "Host Network" &lt;&lt;Node&gt;&gt; #LightSeaGreen {</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "adguardhome" as adguard</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "plex"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "glances"</p>
-<p>&nbsp; &nbsp;}</p>
-<p>&nbsp;</p>
-<p>&nbsp; &nbsp;' --- FRONTEND NETWORK (DMZ) ---</p>
-<p>&nbsp; &nbsp;' This is the primary entry point, managed by the reverse proxy</p>
-<p>&nbsp; &nbsp;package "frontend_net (DMZ)" &lt;&lt;Network&gt;&gt; #Orange {</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "npm" as npm &lt;&lt;gateway&gt;&gt;</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;note right of npm: Main entry point for all web traffic (Ports 80, 443)</p>
-<p>&nbsp;</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;' User-facing applications</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "organizr_new"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "overseerr"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "immich-server"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "paperless_new"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "mealie_new"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "wikijs"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "ollama"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "filebrowser_new"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "code_server_new"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "firefox_new"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "authentik-server"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "whatsupdocker"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "portnote"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "audiobookshelf"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "calibre"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;' ... and many others</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "Misc Web Apps" as misc_frontend</p>
-<p>&nbsp; &nbsp;}</p>
-<p>&nbsp;</p>
-<p>&nbsp; &nbsp;' --- BACKEND NETWORK (Application Logic) ---</p>
-<p>&nbsp; &nbsp;' Internal services that should not be directly exposed</p>
-<p>&nbsp; &nbsp;package "backend_net (Application)" &lt;&lt;Network&gt;&gt; #DodgerBlue {</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "sabnzbd"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "radarr_hd / radarr_4k" as radarr</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "sonarr_hd / sonarr_4k" as sonarr</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "prowlarr"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "bazarr"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "immich_machine_learning"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "authentik-worker"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "readarr-audio"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "readarr-ebook"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "Misc Backend Services" as misc_backend</p>
-<p>&nbsp; &nbsp;}</p>
-<p>&nbsp;</p>
-<p>&nbsp; &nbsp;' --- DATABASE NETWORK (Data Layer) ---</p>
-<p>&nbsp; &nbsp;' The most protected network, containing databases</p>
-<p>&nbsp; &nbsp;package "db_net (Data)" &lt;&lt;Network&gt;&gt; #Tomato {</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "Postgres" as postgres &lt;&lt;database&gt;&gt;</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "Redis" as redis &lt;&lt;database&gt;&gt;</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "MariaDB" as mariadb &lt;&lt;database&gt;&gt;</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "immich_postgres" as immich_pg &lt;&lt;database&gt;&gt;</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "immich_redis" as immich_redis &lt;&lt;database&gt;&gt;</p>
-<p>&nbsp; &nbsp;}</p>
-<p>&nbsp;</p>
-<p>&nbsp; &nbsp;' --- MONITORING NETWORK ---</p>
-<p>&nbsp; &nbsp;' Services dedicated to monitoring the health of the stack</p>
-<p>&nbsp; &nbsp;package "monitoring_net (Monitoring)" &lt;&lt;Network&gt;&gt; #Grey {</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "grafana_port"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "loki_port"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "alloy"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "telegraf"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "influxdb_port"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "uptime-kuma_port"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "tautulli_port"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "scrutiny"</p>
-<p>&nbsp; &nbsp; &nbsp; &nbsp;rectangle "netdata_port"</p>
-<p>&nbsp; &nbsp;}</p>
-<p>}</p>
-<p>&nbsp;</p>
-<p>' Define Relationships and Data Flow</p>
-<p>&nbsp;</p>
-<p>' External Access</p>
-<p>User --&gt; npm : "HTTPS/80, 443"</p>
-<p>LAN --&gt; adguard : "DNS/53"</p>
-<p>LAN --&gt; plex : "32400"</p>
-<p>LAN --&gt; glances</p>
-<p>LAN ..&gt; npm : (Local DNS)</p>
-<p>&nbsp;</p>
-<p>' Reverse Proxy Flow (Primary Path)</p>
-<p>npm ..&gt; organizr_new : "proxies to"</p>
-<p>npm ..&gt; paperless_new</p>
-<p>npm ..&gt; mealie_new</p>
-<p>npm ..&gt; authentik-server</p>
-<p>npm ..&gt; misc_frontend</p>
-<p>&nbsp;</p>
-<p>' Frontend to Backend Communication</p>
-<p>immich-server --&gt; backend_net</p>
-<p>authentik-server --&gt; backend_net</p>
-<p>sabnzbd -[hidden]- radarr ' Layout helper</p>
-<p>prowlarr -[hidden]- sonarr ' Layout helper</p>
-<p>&nbsp;</p>
-<p>' Backend to Database Communication</p>
-<p>backend_net &lt;--&gt; db_net : "App&lt;-&gt;DB Traffic"</p>
-<p>paperless_new --&gt; db_net</p>
-<p>mealie_new --&gt; db_net</p>
-<p>wikijs --&gt; db_net</p>
-<p>authentik-server --&gt; db_net</p>
-<p>authentik-worker --&gt; db_net</p>
-<p>portnote --&gt; db_net</p>
-<p>booklore --&gt; mariadb</p>
-<p>romm --&gt; mariadb</p>
-<p>&nbsp;</p>
-<p>' Immich's self-contained backend</p>
-<p>immich-server --&gt; immich_pg</p>
-<p>immich-server --&gt; immich_redis</p>
-<p>&nbsp;</p>
-<p>' Monitoring Connections (High Level)</p>
-<p>monitoring_net ..&gt; frontend_net : "Scrapes Metrics"</p>
-<p>monitoring_net ..&gt; backend_net : "Scrapes Metrics"</p>
-<p>monitoring_net ..&gt; db_net : "Scrapes Metrics"</p>
-<p>monitoring_net ..&gt; Host : "Monitors Host"</p>
-<p>tautulli_port ..&gt; plex : "Monitors Plex"</p>
-<p>&nbsp;</p>
-<p>@enduml</p>
-<p>&nbsp;</p>
+```plantuml
+@startuml
+!theme spacelab
+
+' Define actors and boundaries
+actor "User / Internet" as User
+cloud "LAN (192.168.10.0/24)" as LAN
+
+boundary "Docker Host" {
+
+    ' --- HOST NETWORK ---
+    ' Containers with direct access to the host's network interface
+    package "Host Network" <<Node>> #LightSeaGreen {
+        rectangle "adguardhome" as adguard
+        rectangle "plex"
+        rectangle "glances"
+    }
+
+    ' --- FRONTEND NETWORK (DMZ) ---
+    ' This is the primary entry point, managed by the reverse proxy
+    package "frontend_net (DMZ)" <<Network>> #Orange {
+        rectangle "npm" as npm <<gateway>>
+        note right of npm: Main entry point for all web traffic (Ports 80, 443)
+
+        ' User-facing applications
+        rectangle "organizr_new"
+        rectangle "overseerr"
+        rectangle "immich-server"
+        rectangle "paperless_new"
+        rectangle "mealie_new"
+        rectangle "wikijs"
+        rectangle "ollama"
+        rectangle "filebrowser_new"
+        rectangle "code_server_new"
+        rectangle "firefox_new"
+        rectangle "authentik-server"
+        rectangle "whatsupdocker"
+        rectangle "portnote"
+        rectangle "audiobookshelf"
+        rectangle "calibre"
+        ' ... and many others
+        rectangle "Misc Web Apps" as misc_frontend
+    }
+
+    ' --- BACKEND NETWORK (Application Logic) ---
+    ' Internal services that should not be directly exposed
+    package "backend_net (Application)" <<Network>> #DodgerBlue {
+        rectangle "sabnzbd"
+        rectangle "radarr_hd / radarr_4k" as radarr
+        rectangle "sonarr_hd / sonarr_4k" as sonarr
+        rectangle "prowlarr"
+        rectangle "bazarr"
+        rectangle "immich_machine_learning"
+        rectangle "authentik-worker"
+        rectangle "readarr-audio"
+        rectangle "readarr-ebook"
+        rectangle "Misc Backend Services" as misc_backend
+    }
+
+    ' --- DATABASE NETWORK (Data Layer) ---
+    ' The most protected network, containing databases
+    package "db_net (Data)" <<Network>> #Tomato {
+        rectangle "Postgres" as postgres <<database>>
+        rectangle "Redis" as redis <<database>>
+        rectangle "MariaDB" as mariadb <<database>>
+        rectangle "immich_postgres" as immich_pg <<database>>
+        rectangle "immich_redis" as immich_redis <<database>>
+    }
+
+    ' --- MONITORING NETWORK ---
+    ' Services dedicated to monitoring the health of the stack
+    package "monitoring_net (Monitoring)" <<Network>> #Grey {
+        rectangle "grafana_port"
+        rectangle "loki_port"
+        rectangle "alloy"
+        rectangle "telegraf"
+        rectangle "influxdb_port"
+        rectangle "uptime-kuma_port"
+        rectangle "tautulli_port"
+        rectangle "scrutiny"
+        rectangle "netdata_port"
+    }
+}
+
+' Define Relationships and Data Flow
+
+' External Access
+User --> npm : "HTTPS/80, 443"
+LAN --> adguard : "DNS/53"
+LAN --> plex : "32400"
+LAN --> glances
+LAN ..> npm : (Local DNS)
+
+' Reverse Proxy Flow (Primary Path)
+npm ..> organizr_new : "proxies to"
+npm ..> paperless_new
+npm ..> mealie_new
+npm ..> authentik-server
+npm ..> misc_frontend
+
+' Frontend to Backend Communication
+immich-server --> backend_net
+authentik-server --> backend_net
+sabnzbd -[hidden]- radarr ' Layout helper
+prowlarr -[hidden]- sonarr ' Layout helper
+
+' Backend to Database Communication
+backend_net <--> db_net : "App<->DB Traffic"
+paperless_new --> db_net
+mealie_new --> db_net
+wikijs --> db_net
+authentik-server --> db_net
+authentik-worker --> db_net
+portnote --> db_net
+booklore --> mariadb
+romm --> mariadb
+
+' Immich's self-contained backend
+immich-server --> immich_pg
+immich-server --> immich_redis
+
+' Monitoring Connections (High Level)
+monitoring_net ..> frontend_net : "Scrapes Metrics"
+monitoring_net ..> backend_net : "Scrapes Metrics"
+monitoring_net ..> db_net : "Scrapes Metrics"
+monitoring_net ..> Host : "Monitors Host"
+tautulli_port ..> plex : "Monitors Plex"
+
+@enduml
+```
